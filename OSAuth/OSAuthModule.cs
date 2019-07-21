@@ -26,6 +26,15 @@ using Nini.Config;
 
 namespace org.herbal3d.OSAuth {
 
+    // Encapsulization of auth to be passed around
+    public class OSAuthInfo {
+        public OSAuthInfo() {
+        }
+
+        public string ToBasilAuth() {
+        }
+    }
+
     [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "OSAuth")]
     public class OSAuthModule : INonSharedRegionModule {
         private static readonly ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
@@ -46,9 +55,11 @@ namespace org.herbal3d.OSAuth {
         // IRegionModuleBase.Initialize
         public void Initialise(IConfigSource pConfig) {
             _params = pConfig.Configs["OSAuth"];
-            _enabled = _params.GetBoolean("Enabled", false);
-            if (_enabled) {
-                _log.InfoFormat("{0} Enabled", _logHeader);
+            if (_params != null) {
+                _enabled = _params.GetBoolean("Enabled", false);
+                if (_enabled) {
+                    _log.InfoFormat("{0} Enabled", _logHeader);
+                }
             }
         }
         //
@@ -61,6 +72,9 @@ namespace org.herbal3d.OSAuth {
         public void AddRegion(Scene pScene) {
             // Remember all the loaded scenes
             _scene = pScene;
+
+            // Add to region a handle to this module
+            _scene.RegisterModuleInterface<OSAuthModule>(this);
         }
 
         // IRegionModuleBase.RemoveRegion
@@ -76,6 +90,29 @@ namespace org.herbal3d.OSAuth {
         public void RegionLoaded(Scene scene) {
             if (_enabled) {
             }
+        }
+
+        public string AssetAuth {
+            get {
+                return "xx";
+            }
+        }
+        public DateTime AssetAuthExpiration {
+            get {
+                return DateTime.Now;
+            }
+        }
+        public string SessionAuth {
+            get {
+                return "xx";
+            }
+        }
+
+        // Validate the passed authorization string.
+        // The string is presumed to be a JWT string so check the signature and expiration of same.
+        public bool Validate(string pAuthString) {
+            _log.DebugFormat("{0} Validate: {1}", _logHeader, pAuthString);
+            return true;
         }
     }
 }
