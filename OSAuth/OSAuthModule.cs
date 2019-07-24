@@ -13,6 +13,9 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using Mono.Addins;
 
 using OpenSim.Framework;
@@ -27,11 +30,43 @@ using Nini.Config;
 namespace org.herbal3d.OSAuth {
 
     // Encapsulization of auth to be passed around
-    public class OSAuthInfo {
-        public OSAuthInfo() {
+    public class OSAuthToken {
+
+        public string ServiceName;
+        public string Token;
+        public DateTime Expiration;
+
+        public OSAuthToken(string pServiceName) {
+            ServiceName = pServiceName;
+            Token = Guid.NewGuid().ToString();
+            Expiration = DateTime.UtcNow + TimeSpan.FromHours(4.0);
         }
 
-        public string ToBasilAuth() {
+        public string ToJSON() {
+            return ToJSON(null);
+        }
+        public string ToJSON(Dictionary<string,string> pKeysToAdd) {
+            StringBuilder buff = new StringBuilder();
+            buff.Append(" { ");
+            buff.Append("'Name': '" + ServiceName + "'");
+            if (pKeysToAdd != null) {
+                foreach (var kvp in pKeysToAdd) {
+                    buff.Append(", ");
+                    buff.Append("'" + kvp.Key + "': '" + kvp.Value + "'");
+                }
+            }
+            buff.Append(", ");
+            buff.Append("'Auth': '" + Token + "'");
+            buff.Append(", ");
+            buff.Append("'AuthExpiration': '" 
+                    + ExpirationString()
+                    + "'");
+            buff.Append(" } ");
+            return buff.ToString();
+        }
+
+        public string ExpirationString() {
+            return Expiration.ToString("yyyy-MM-dd'T'HH:mm:ssK", DateTimeFormatInfo.InvariantInfo);
         }
     }
 
@@ -44,6 +79,10 @@ namespace org.herbal3d.OSAuth {
 
         private bool _enabled = false;
         private IConfig _params;
+
+        private string _regionAuthSecret;
+
+        private Dictionary<string, OSAuthToken> _tokensForServices;
 
         // IRegionModuleBase.Name
         public string Name { get { return "OSAuthModule"; } }
@@ -61,6 +100,8 @@ namespace org.herbal3d.OSAuth {
                     _log.InfoFormat("{0} Enabled", _logHeader);
                 }
             }
+            _regionAuthSecret = CreateASecret();
+            _tokensForServices = new Dictionary<string, OSAuthToken>();
         }
         //
         // IRegionModuleBase.Close
@@ -92,20 +133,35 @@ namespace org.herbal3d.OSAuth {
             }
         }
 
-        public string AssetAuth {
-            get {
-                return "xx";
+        // Create an Auth token for the specified service.
+        // Throws exception of the service name already has a token
+        public OSAuthToken CreateAuthForService(string pServiceName) {
+            if (_tokensForServices.ContainsKey(pServiceName)) {
+                throw new Exception("Duplicate service name");
             }
+            OSAuthToken token = new OSAuthToken(pServiceName);
+            _tokensForServices.Add(pServiceName, token);
+            return token;
+            
         }
-        public DateTime AssetAuthExpiration {
-            get {
-                return DateTime.Now;
-            }
+
+        // Get the auth token for the service.
+        // Return 'null' if there is no token for this service
+        public OSAuthToken GetServiceAuth(string pServiceName) {
+            OSAuthToken ret = null;
+            _tokensForServices.TryGetValue(pServiceName, out ret);
+            return ret;
         }
-        public string SessionAuth {
-            get {
-                return "xx";
+
+        // Remove the token for the named service.
+        // Returns 'true' if token removed, 'false' if there was no such token.
+        public bool RemoveServiceAuth(string pServiceName) {
+            bool ret = false;
+            if (_tokensForServices.TryGetValue(pServiceName, out OSAuthToken theToken)) {
+                ret = true;
+                _tokensForServices.Remove(pServiceName);
             }
+            return ret;
         }
 
         // Validate the passed authorization string.
@@ -113,6 +169,16 @@ namespace org.herbal3d.OSAuth {
         public bool Validate(string pAuthString) {
             _log.DebugFormat("{0} Validate: {1}", _logHeader, pAuthString);
             return true;
+        }
+
+        public bool Validate(OSAuthToken pToken) {
+            return true;
+        }
+
+        // Create the secret used for JWT tokens.
+        // TODO: Research and make a better secret
+        private string CreateASecret() {
+            return Guid.NewGuid().ToString();
         }
     }
 }
