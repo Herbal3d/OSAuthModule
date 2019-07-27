@@ -48,19 +48,19 @@ namespace org.herbal3d.OSAuth {
         public string ToJSON(Dictionary<string,string> pKeysToAdd) {
             StringBuilder buff = new StringBuilder();
             buff.Append(" { ");
-            buff.Append("'Name': '" + ServiceName + "'");
+            buff.Append("\"Name\": \"" + ServiceName + "\"");
             if (pKeysToAdd != null) {
                 foreach (var kvp in pKeysToAdd) {
                     buff.Append(", ");
-                    buff.Append("'" + kvp.Key + "': '" + kvp.Value + "'");
+                    buff.Append("\"" + kvp.Key + "\": \"" + kvp.Value + "\"");
                 }
             }
             buff.Append(", ");
-            buff.Append("'Auth': '" + Token + "'");
+            buff.Append("\"Auth\": \"" + Token + "\"");
             buff.Append(", ");
-            buff.Append("'AuthExpiration': '" 
+            buff.Append("\"AuthExpiration\": \"" 
                     + ExpirationString()
-                    + "'");
+                    + "\"");
             buff.Append(" } ");
             return buff.ToString();
         }
@@ -82,7 +82,10 @@ namespace org.herbal3d.OSAuth {
 
         private string _regionAuthSecret;
 
+        // Authorization tokens for services on this machine
         private Dictionary<string, OSAuthToken> _tokensForServices;
+        // Authorization tokens for clients on other machines
+        private Dictionary<string, OSAuthToken> _tokensForClients;
 
         // IRegionModuleBase.Name
         public string Name { get { return "OSAuthModule"; } }
@@ -102,6 +105,7 @@ namespace org.herbal3d.OSAuth {
             }
             _regionAuthSecret = CreateASecret();
             _tokensForServices = new Dictionary<string, OSAuthToken>();
+            _tokensForClients = new Dictionary<string, OSAuthToken>();
         }
         //
         // IRegionModuleBase.Close
@@ -116,6 +120,8 @@ namespace org.herbal3d.OSAuth {
 
             // Add to region a handle to this module
             _scene.RegisterModuleInterface<OSAuthModule>(this);
+
+            // TODO: start timer for scanning and removing expired tokens
         }
 
         // IRegionModuleBase.RemoveRegion
@@ -136,13 +142,36 @@ namespace org.herbal3d.OSAuth {
         // Create an Auth token for the specified service.
         // Throws exception of the service name already has a token
         public OSAuthToken CreateAuthForService(string pServiceName) {
-            if (_tokensForServices.ContainsKey(pServiceName)) {
-                throw new Exception("Duplicate service name");
+            OSAuthToken token = null;
+            lock (_tokensForServices) {
+                if (_tokensForServices.ContainsKey(pServiceName)) {
+                    throw new Exception("Duplicate service name");
+                }
+                token = new OSAuthToken(pServiceName);
             }
-            OSAuthToken token = new OSAuthToken(pServiceName);
-            _tokensForServices.Add(pServiceName, token);
             return token;
             
+        }
+
+        public OSAuthToken RegisterAuthForService(string pServiceName, OSAuthToken pToken) {
+            lock (_tokensForServices) {
+                if (_tokensForServices.ContainsKey(pServiceName)) {
+                    _tokensForServices.Remove(pServiceName);
+                }
+                _tokensForServices.Add(pServiceName, pToken);
+            }
+            return pToken;
+        }
+
+        // Register the authorization tokens for the outgoing (other side) services
+        public OSAuthToken RegisterAuthForClient(string pServiceName, OSAuthToken pToken) {
+            lock (_tokensForClients) {
+                if (_tokensForClients.ContainsKey(pServiceName)) {
+                    _tokensForClients.Remove(pServiceName);
+                }
+                _tokensForClients.Add(pServiceName, pToken);
+            }
+            return pToken;
         }
 
         // Get the auth token for the service.
@@ -150,6 +179,12 @@ namespace org.herbal3d.OSAuth {
         public OSAuthToken GetServiceAuth(string pServiceName) {
             OSAuthToken ret = null;
             _tokensForServices.TryGetValue(pServiceName, out ret);
+            return ret;
+        }
+
+        public OSAuthToken GetClientAuth(string pServiceName) {
+            OSAuthToken ret = null;
+            _tokensForClients.TryGetValue(pServiceName, out ret);
             return ret;
         }
 
