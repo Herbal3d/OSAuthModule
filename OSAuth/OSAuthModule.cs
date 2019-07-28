@@ -201,12 +201,23 @@ namespace org.herbal3d.OSAuth {
 
         // Validate the passed authorization string.
         // The string is presumed to be a JWT string so check the signature and expiration of same.
-        public bool Validate(string pAuthString) {
-            _log.DebugFormat("{0} Validate: {1}", _logHeader, pAuthString);
-            return true;
+        public bool Validate(string pAuthString, OSAuthToken pToken) {
+            bool ret = false;
+            if (pToken == null) {
+                // If there is no connection client token yet, verify that the
+                //      auth string is a legal JWT
+                // TODO:
+                ret = true;
+            }
+            else {
+                ret = (pAuthString == pToken.Token);
+            }
+            _log.DebugFormat("{0} Validate: {1}. Auth={2}", _logHeader, pAuthString, ret);
+            return ret;
         }
 
         public bool Validate(OSAuthToken pToken) {
+            _log.DebugFormat("{0} Validate just token. Auth={1}", _logHeader, true);
             return true;
         }
 
