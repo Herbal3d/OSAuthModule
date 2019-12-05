@@ -24,52 +24,146 @@ using OpenSim.Region.Framework.Scenes;
 
 using org.herbal3d.cs.CommonEntitiesUtil;
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using log4net;
 using Nini.Config;
 
 namespace org.herbal3d.OSAuth {
 
-    // Encapsulization of auth to be passed around
+    // Encapsulization of auth to be passed around.
+    // Create the OSAuthToken from scratch (create new with 'Service' specified)
+    //     or serialized from an existing token (OSAuthToken.FromToken).
+    // A sendable token is fetched with the Token() method.
+    //
+    // This is envisioned to be a JWT token that can be verified (by signatures)
+    //    and to carry information about the user, permissions, etc.
+    // For the moment, it is just a Base64 encoded JSON string with that data
+    // During this transition period, there are two forms: 1) a JWT'ish type
+    //    which is a Base64 encoded JSON string and 2) a random string. The
+    //    latter is formatted when _randomString is not NULL or Empty.
+    //
+    // The 'MemberSerialization.OptIn' means that variables won't be serialized into
+    //     the JSON unless explicitly tagged with '[JsonProperty]'.
+    [JsonObject(MemberSerialization.OptIn)]
     public class OSAuthToken {
 
-        public string ServiceName;
-        public string Token;
-        public DateTime Expiration;
-
-        public OSAuthToken(string pServiceName) {
-            ServiceName = pServiceName;
-            Token = Guid.NewGuid().ToString();
-            Expiration = DateTime.UtcNow + TimeSpan.FromHours(4.0);
+        private string _serviceName;
+        [JsonProperty]
+        public string Srv {
+            get { return _serviceName; }
+            set { _serviceName = value; _modified = true; }
         }
 
-        public string ToJSON() {
-            return ToJSON(null);
+        private string _sessionId;
+        [JsonProperty]
+        public string Sid {
+            get { return _sessionId; }
+            set { _sessionId = value; _modified = true; }
         }
-        public string ToJSON(Dictionary<string,string> pKeysToAdd) {
-            StringBuilder buff = new StringBuilder();
-            buff.Append(" { ");
-            buff.Append("\"Name\": \"" + ServiceName + "\"");
-            if (pKeysToAdd != null) {
-                foreach (var kvp in pKeysToAdd) {
-                    buff.Append(", ");
-                    buff.Append("\"" + kvp.Key + "\": \"" + kvp.Value + "\"");
+
+        private DateTime _expiration;
+        [JsonProperty]
+        public DateTime Exp {
+            get { return _expiration; }
+            set { _expiration = value; _modified = true; }
+        }
+
+        // A secret that makes this token unique
+        private string _secret;
+        [JsonProperty]
+        private string Secret {
+            get { return _secret; }
+            set { _secret = value; _modified = true; }
+        }
+
+        private string _token;
+        public string Token {
+            get {
+                lock (_locker) {
+                    if (_modified) {
+                        BuildToken();
+                        _modified = false;
+                    }
+                    return _token;
                 }
             }
-            buff.Append(", ");
-            buff.Append("\"Auth\": \"" + Token + "\"");
-            buff.Append(", ");
-            buff.Append("\"AuthExpiration\": \"" 
-                    + ExpirationString()
-                    + "\"");
-            buff.Append(" } ");
-            return buff.ToString();
+            private set { _token = value; _modified = false; }
+        }
+
+        // Alternate form of the token which is just a random string.
+        // If is is null or empty, then token is built from the above info.
+        private string _randomString;
+
+        // 'true' if any of the underlying values have changed and Token needs
+        //    to be rebuilt.
+        private bool _modified = true;
+
+        // Used for locking this to try and keep updating parameters and computed token in sync
+        private Object _locker = new Object();
+
+        // Authentication/Authorization Token
+        // TODO: Make into JWT
+        // For the moment, the token is just a 
+        public OSAuthToken() {
+            _serviceName = "";
+            _expiration = DateTime.UtcNow + TimeSpan.FromHours(4.0);
+            _sessionId = "";
+            _secret = org.herbal3d.cs.CommonEntitiesUtil.Util.RandomString(10);
+            _modified = true;
+            _randomString = null;
+        }
+
+        // Build the token based on the current values
+        private void BuildToken() {
+            lock (_locker) {
+                if (String.IsNullOrEmpty(_randomString)) {
+                    string jToken = JsonConvert.SerializeObject(this);
+                    _token = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(jToken));
+                }
+                else {
+                    _token = _randomString;
+                }
+            }
+        }
+
+        // From a Base64 encoded string, extract the values for a token
+        public static OSAuthToken FromString(string pTokenString) {
+            OSAuthToken token = null;
+            try {
+                string jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
+                if (jToken.TrimStart().StartsWith("{")) {
+                    token = JsonConvert.DeserializeObject<OSAuthToken>(jToken);
+                }
+                else {
+                    // The token is just a secret
+                    token = new OSAuthToken {
+                        _randomString = pTokenString
+                    };
+                }
+            }
+            catch {
+                // Most likely here because the parsing of the token failed.
+                // This means the string was just a token by itself
+                token = new OSAuthToken {
+                    _randomString = pTokenString
+                };
+            }
+            return token;
+        }
+
+        public override string ToString() {
+            return this.Token;
         }
 
         public string ExpirationString() {
-            return Expiration.ToString("yyyy-MM-dd'T'HH:mm:ssK", DateTimeFormatInfo.InvariantInfo);
+            return Exp.ToString("yyyy-MM-dd'T'HH:mm:ssK", DateTimeFormatInfo.InvariantInfo);
         }
     }
 
+    // OSAuthModule: Center for logic for Herbal3d authorization logic.
+    // Provides a central store for OSAuthTokens because expiration has to be managed.
     [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "OSAuth")]
     public class OSAuthModule : INonSharedRegionModule {
         private static readonly ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
@@ -81,11 +175,6 @@ namespace org.herbal3d.OSAuth {
         private IConfig _params;
 
         private string _regionAuthSecret;
-
-        // Authorization tokens for services on this machine
-        private Dictionary<string, OSAuthToken> _tokensForServices;
-        // Authorization tokens for clients on other machines
-        private Dictionary<string, OSAuthToken> _tokensForClients;
 
         // IRegionModuleBase.Name
         public string Name { get { return "OSAuthModule"; } }
@@ -104,8 +193,6 @@ namespace org.herbal3d.OSAuth {
                 }
             }
             _regionAuthSecret = CreateASecret();
-            _tokensForServices = new Dictionary<string, OSAuthToken>();
-            _tokensForClients = new Dictionary<string, OSAuthToken>();
         }
         //
         // IRegionModuleBase.Close
@@ -137,66 +224,6 @@ namespace org.herbal3d.OSAuth {
         public void RegionLoaded(Scene scene) {
             if (_enabled) {
             }
-        }
-
-        // Create an Auth token for the specified service.
-        // Throws exception of the service name already has a token
-        public OSAuthToken CreateAuthForService(string pServiceName) {
-            OSAuthToken token = null;
-            lock (_tokensForServices) {
-                if (_tokensForServices.ContainsKey(pServiceName)) {
-                    throw new Exception("Duplicate service name");
-                }
-                token = new OSAuthToken(pServiceName);
-            }
-            return token;
-            
-        }
-
-        public OSAuthToken RegisterAuthForService(string pServiceName, OSAuthToken pToken) {
-            lock (_tokensForServices) {
-                if (_tokensForServices.ContainsKey(pServiceName)) {
-                    _tokensForServices.Remove(pServiceName);
-                }
-                _tokensForServices.Add(pServiceName, pToken);
-            }
-            return pToken;
-        }
-
-        // Register the authorization tokens for the outgoing (other side) services
-        public OSAuthToken RegisterAuthForClient(string pServiceName, OSAuthToken pToken) {
-            lock (_tokensForClients) {
-                if (_tokensForClients.ContainsKey(pServiceName)) {
-                    _tokensForClients.Remove(pServiceName);
-                }
-                _tokensForClients.Add(pServiceName, pToken);
-            }
-            return pToken;
-        }
-
-        // Get the auth token for the service.
-        // Return 'null' if there is no token for this service
-        public OSAuthToken GetServiceAuth(string pServiceName) {
-            OSAuthToken ret = null;
-            _tokensForServices.TryGetValue(pServiceName, out ret);
-            return ret;
-        }
-
-        public OSAuthToken GetClientAuth(string pServiceName) {
-            OSAuthToken ret = null;
-            _tokensForClients.TryGetValue(pServiceName, out ret);
-            return ret;
-        }
-
-        // Remove the token for the named service.
-        // Returns 'true' if token removed, 'false' if there was no such token.
-        public bool RemoveServiceAuth(string pServiceName) {
-            bool ret = false;
-            if (_tokensForServices.TryGetValue(pServiceName, out OSAuthToken theToken)) {
-                ret = true;
-                _tokensForServices.Remove(pServiceName);
-            }
-            return ret;
         }
 
         // Validate the passed authorization string.
