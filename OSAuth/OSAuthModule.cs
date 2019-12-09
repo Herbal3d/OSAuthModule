@@ -33,8 +33,8 @@ using Nini.Config;
 namespace org.herbal3d.OSAuth {
 
     // Encapsulization of auth to be passed around.
-    // Create the OSAuthToken from scratch (create new with 'Service' specified)
-    //     or serialized from an existing token (OSAuthToken.FromToken).
+    // Create the OSAuthToken from scratch
+    //     or serialized from an existing token (OSAuthToken.FromString).
     // A sendable token is fetched with the Token() method.
     //
     // This is envisioned to be a JWT token that can be verified (by signatures)
@@ -43,39 +43,57 @@ namespace org.herbal3d.OSAuth {
     // During this transition period, there are two forms: 1) a JWT'ish type
     //    which is a Base64 encoded JSON string and 2) a random string. The
     //    latter is formatted when _randomString is not NULL or Empty.
-    //
-    // The 'MemberSerialization.OptIn' means that variables won't be serialized into
-    //     the JSON unless explicitly tagged with '[JsonProperty]'.
-    [JsonObject(MemberSerialization.OptIn)]
     public class OSAuthToken {
 
-        private string _serviceName;
-        [JsonProperty]
         public string Srv {
-            get { return _serviceName; }
-            set { _serviceName = value; _modified = true; }
+            get { return GetProperty("Srv"); }
+            set { AddProperty("Srv", value); _modified = true; }
         }
 
-        private string _sessionId;
-        [JsonProperty]
         public string Sid {
-            get { return _sessionId; }
-            set { _sessionId = value; _modified = true; }
+            get { return GetProperty("Sid"); }
+            set { AddProperty("Sid", value); _modified = true; }
         }
 
-        private DateTime _expiration;
-        [JsonProperty]
         public DateTime Exp {
-            get { return _expiration; }
-            set { _expiration = value; _modified = true; }
+            get { return ExpirationValue(GetProperty("Exp")); }
+            set { AddProperty("Exp", ExpirationString(value)); _modified = true; }
         }
 
         // A secret that makes this token unique
-        private string _secret;
-        [JsonProperty]
         private string Secret {
-            get { return _secret; }
-            set { _secret = value; _modified = true; }
+            get { return GetProperty("Secret"); }
+            set { AddProperty("Secret", value); _modified = true; }
+        }
+
+        // THe token is made up of key/value pairs
+        private Dictionary<string, string> _authProperties;
+
+        public void AddProperty(string key, string val) {
+            if (_authProperties.ContainsKey(key)) {
+                _authProperties[key] = val;
+            }
+            else {
+                _authProperties.Add(key, val);
+            }
+            _modified = true;
+        }
+        public bool HasProperty(string key) {
+            return _authProperties.ContainsKey(key);
+        }
+        // Get the value of a property. Returns 'null' if not found.
+        public string GetProperty(string key) {
+            string ret = null;
+            if (_authProperties.ContainsKey(key)) {
+                ret = _authProperties[key];
+            }
+            return ret;
+        }
+
+        public void ForEachProperty(Action<KeyValuePair<string, string>> pAction) {
+            foreach (KeyValuePair<string, string> pair in _authProperties) {
+                pAction(pair);
+            }
         }
 
         private string _token;
@@ -90,6 +108,14 @@ namespace org.herbal3d.OSAuth {
                 }
             }
             private set { _token = value; _modified = false; }
+        }
+        // The Token is a Base64 encoding of a JSON string. THis is the underlying JSON
+        private string _tokenJSON;
+        public string TokenJSON {
+            get {
+                _ = this.Token;
+                return _tokenJSON;
+            }
         }
 
         // Alternate form of the token which is just a random string.
@@ -107,10 +133,12 @@ namespace org.herbal3d.OSAuth {
         // TODO: Make into JWT
         // For the moment, the token is just a 
         public OSAuthToken() {
-            _serviceName = "";
-            _expiration = DateTime.UtcNow + TimeSpan.FromHours(4.0);
-            _sessionId = "";
-            _secret = org.herbal3d.cs.CommonEntitiesUtil.Util.RandomString(10);
+            _authProperties = new Dictionary<string, string>() {
+                { "Srv", "" },
+                { "Exp", ExpirationString(DateTime.UtcNow + TimeSpan.FromHours(4.0)) },
+                { "Sid", "" },
+                { "Secret", org.herbal3d.cs.CommonEntitiesUtil.Util.RandomString(10) },
+            };
             _modified = true;
             _randomString = null;
         }
@@ -119,11 +147,18 @@ namespace org.herbal3d.OSAuth {
         private void BuildToken() {
             lock (_locker) {
                 if (String.IsNullOrEmpty(_randomString)) {
-                    string jToken = JsonConvert.SerializeObject(this);
-                    _token = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(jToken));
+                    // Not a random string. Create token from properties
+                    JObject jObj = new JObject();
+                    foreach (KeyValuePair<string, string> vals in _authProperties) {
+                        jObj.Add(vals.Key, vals.Value);
+                    }
+                    _tokenJSON = jObj.ToString();
+                    _token = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(_tokenJSON));
                 }
                 else {
+                    // Token is just a random string.
                     _token = _randomString;
+                    _tokenJSON = _randomString;
                 }
             }
         }
@@ -133,11 +168,15 @@ namespace org.herbal3d.OSAuth {
             OSAuthToken token = null;
             try {
                 string jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
+                token = new OSAuthToken();
                 if (jToken.TrimStart().StartsWith("{")) {
-                    token = JsonConvert.DeserializeObject<OSAuthToken>(jToken);
+                    JObject jObj = JObject.Parse(jToken);
+                    foreach (KeyValuePair<string, JToken> val in jObj) {
+                        token.AddProperty(val.Key, (string)val.Value);
+                    }
                 }
                 else {
-                    // The token is just a secret
+                    // The token doesn't look like JSON so assume it's a random string
                     token = new OSAuthToken {
                         _randomString = pTokenString
                     };
@@ -157,8 +196,22 @@ namespace org.herbal3d.OSAuth {
             return this.Token;
         }
 
+        // Routines for the conversion of the expiration time to and from string representation
         public string ExpirationString() {
             return Exp.ToString("yyyy-MM-dd'T'HH:mm:ssK", DateTimeFormatInfo.InvariantInfo);
+        }
+        public string ExpirationString(DateTime pExp) {
+            return pExp.ToString("yyyy-MM-dd'T'HH:mm:ssK", DateTimeFormatInfo.InvariantInfo);
+        }
+        // Parse the date time from a string. Return 'forever' if not parseable
+        public DateTime ExpirationValue(string pExpStr) {
+            DateTime ret;
+            if (!String.IsNullOrEmpty(pExpStr)) {
+                if (DateTime.TryParse(pExpStr, out ret)) {
+                    return ret;
+                }
+            }
+            return new DateTime(2199, 12, 31);
         }
     }
 
@@ -253,5 +306,6 @@ namespace org.herbal3d.OSAuth {
         private string CreateASecret() {
             return Guid.NewGuid().ToString();
         }
+
     }
 }
