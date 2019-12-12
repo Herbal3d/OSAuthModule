@@ -213,6 +213,12 @@ namespace org.herbal3d.OSAuth {
             }
             return new DateTime(2199, 12, 31);
         }
+
+        // Check that the significant pieces of this token matches the passed token
+        public bool Matches(OSAuthToken pOther) {
+            bool ret = false;
+            return (this.Sid == pOther.Sid) && (this.Secret == pOther.Secret);
+        }
     }
 
     // OSAuthModule: Center for logic for Herbal3d authorization logic.
