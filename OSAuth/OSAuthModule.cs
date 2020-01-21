@@ -67,7 +67,7 @@ namespace org.herbal3d.OSAuth {
         }
 
         // THe token is made up of key/value pairs
-        private Dictionary<string, string> _authProperties;
+        private readonly Dictionary<string, string> _authProperties;
 
         public void AddProperty(string key, string val) {
             if (_authProperties.ContainsKey(key)) {
@@ -127,7 +127,7 @@ namespace org.herbal3d.OSAuth {
         private bool _modified = true;
 
         // Used for locking this to try and keep updating parameters and computed token in sync
-        private Object _locker = new Object();
+        private readonly Object _locker = new Object();
 
         // Authentication/Authorization Token
         // TODO: Make into JWT
@@ -165,7 +165,7 @@ namespace org.herbal3d.OSAuth {
 
         // From a Base64 encoded string, extract the values for a token
         public static OSAuthToken FromString(string pTokenString) {
-            OSAuthToken token = null;
+            OSAuthToken token;
             try {
                 string jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
                 token = new OSAuthToken();
@@ -205,9 +205,8 @@ namespace org.herbal3d.OSAuth {
         }
         // Parse the date time from a string. Return 'forever' if not parseable
         public DateTime ExpirationValue(string pExpStr) {
-            DateTime ret;
             if (!String.IsNullOrEmpty(pExpStr)) {
-                if (DateTime.TryParse(pExpStr, out ret)) {
+                if (DateTime.TryParse(pExpStr, out DateTime ret)) {
                     return ret;
                 }
             }
@@ -216,7 +215,6 @@ namespace org.herbal3d.OSAuth {
 
         // Check that the significant pieces of this token matches the passed token
         public bool Matches(OSAuthToken pOther) {
-            bool ret = false;
             return (this.Sid == pOther.Sid) && (this.Secret == pOther.Secret);
         }
     }
@@ -233,7 +231,6 @@ namespace org.herbal3d.OSAuth {
         private bool _enabled = false;
         private IConfig _params;
 
-        private string _regionAuthSecret;
 
         // IRegionModuleBase.Name
         public string Name { get { return "OSAuthModule"; } }
@@ -251,7 +248,6 @@ namespace org.herbal3d.OSAuth {
                     _log.InfoFormat("{0} Enabled", _logHeader);
                 }
             }
-            _regionAuthSecret = CreateASecret();
         }
         //
         // IRegionModuleBase.Close
