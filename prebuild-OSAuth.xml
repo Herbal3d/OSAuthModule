@@ -22,11 +22,13 @@
       <Reference name="OpenSim.Services.Interfaces"/>
       <Reference name="OpenSim.Region.Framework"/>
       <Reference name="OpenSim.Region.CoreModules"/>
+      <Reference name="OpenSim.Tests.Common"/>
 
       <Reference name="Herbal3d.CommonEntitiesUtil"/>
 
       <Reference name="Nini"/>
       <Reference name="log4net"/>
+      <Reference name="nunit.framework"/>
 
       <Reference name="Newtonsoft.Json"/>
 
