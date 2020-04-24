@@ -35,16 +35,19 @@ namespace org.herbal3d.OSAuth {
     //    latter is formatted when _randomString is not NULL or Empty.
     public class OSAuthToken {
 
+        // Service: usually who created this or service it is for
         public string Srv {
             get { return GetProperty("Srv"); }
             set { AddProperty("Srv", value); _modified = true; }
         }
 
+        // StreamID: the stream the token is associated with
         public string Sid {
             get { return GetProperty("Sid"); }
             set { AddProperty("Sid", value); _modified = true; }
         }
 
+        // Expiration time
         public DateTime Exp {
             get { return ExpirationValue(GetProperty("Exp")); }
             set { AddProperty("Exp", ExpirationString(value)); _modified = true; }
