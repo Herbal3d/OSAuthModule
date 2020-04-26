@@ -1,4 +1,4 @@
-    <Project frameworkVersion="v4_6" name="Herbal3d.OSAuth" path="addon-modules/OSAuthModule/OSAuthModule" type="Library">
+    <Project frameworkVersion="v4_6" name="Herbal3d.OSAuthModule" path="addon-modules/OSAuthModule/OSAuthModule" type="Library">
       <Configuration name="Debug">
         <Options>
           <OutputPath>../../../bin/</OutputPath>
@@ -25,6 +25,7 @@
       <Reference name="OpenSim.Tests.Common"/>
 
       <Reference name="Herbal3d.CommonEntitiesUtil"/>
+      <Reference name="Herbal3d.OSAuth"/>
 
       <Reference name="Nini"/>
       <Reference name="log4net"/>

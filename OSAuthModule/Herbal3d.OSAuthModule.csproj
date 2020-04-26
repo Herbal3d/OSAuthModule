@@ -3,12 +3,12 @@
 	  <ProjectType>Local</ProjectType>
 	  <ProductVersion>14.0.23107.0</ProductVersion>
 	  <SchemaVersion>2.0</SchemaVersion>
-	  <ProjectGuid>{65FDD8FD-0000-0000-0000-000000000000}</ProjectGuid>
+	  <ProjectGuid>{D7D3C7DB-0000-0000-0000-000000000000}</ProjectGuid>
 	  <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
 	  <ApplicationIcon></ApplicationIcon>
 	  <AssemblyKeyContainerName>
 	  </AssemblyKeyContainerName>
-	  <AssemblyName>Herbal3d.OSAuth</AssemblyName>
+	  <AssemblyName>Herbal3d.OSAuthModule</AssemblyName>
 	  <DefaultClientScript>JScript</DefaultClientScript>
 	  <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
 	  <DefaultTargetSchema>IE50</DefaultTargetSchema>
@@ -16,7 +16,7 @@
 	  <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
 	  <OutputType>Library</OutputType>
 	  <AppDesignerFolder></AppDesignerFolder>
-	  <RootNamespace>Herbal3d.OSAuth</RootNamespace>
+	  <RootNamespace>Herbal3d.OSAuthModule</RootNamespace>
 	  <StartupObject></StartupObject>
 	  <StartArguments></StartArguments>
 	  <FileUpgradeFlags>
@@ -81,6 +81,10 @@
 		  <Name>Nini</Name>
 		<Private>False</Private>
 	  </Reference>
+	  <Reference Include="nunit.framework" >
+		  <Name>nunit.framework</Name>
+		<Private>False</Private>
+	  </Reference>
 	  <Reference Include="System" >
 		  <Name>System</Name>
 		<Private>False</Private>
@@ -95,15 +99,15 @@
 	  </Reference>
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\OSAuth\Herbal3d.OSAuth.csproj">
-		<Name>Herbal3d.CommonEntitiesUtil</Name>
-		<Project>{59F94476-0000-0000-0000-000000000000}</Project>
-		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-		<Private>False</Private>
-	  </ProjectReference>
 	  <ProjectReference Include="..\..\HerbalCommonEntitiesCS\CommonEntitiesUtil\Herbal3d.CommonEntitiesUtil.csproj">
 		<Name>Herbal3d.CommonEntitiesUtil</Name>
 		<Project>{59F9BD1D-0000-0000-0000-000000000000}</Project>
+		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+		<Private>False</Private>
+	  </ProjectReference>
+	  <ProjectReference Include="..\OSAuth\Herbal3d.OSAuth.csproj">
+		<Name>Herbal3d.OSAuth</Name>
+		<Project>{65FDD8FD-0000-0000-0000-000000000000}</Project>
 		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
 		<Private>False</Private>
 	  </ProjectReference>
@@ -128,6 +132,12 @@
 	  <ProjectReference Include="..\..\..\OpenSim\Services\Interfaces\OpenSim.Services.Interfaces.csproj">
 		<Name>OpenSim.Services.Interfaces</Name>
 		<Project>{08ECE473-0000-0000-0000-000000000000}</Project>
+		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+		<Private>False</Private>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\..\OpenSim\Tests\Common\OpenSim.Tests.Common.csproj">
+		<Name>OpenSim.Tests.Common</Name>
+		<Project>{CC43930F-0000-0000-0000-000000000000}</Project>
 		<Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
 		<Private>False</Private>
 	  </ProjectReference>
