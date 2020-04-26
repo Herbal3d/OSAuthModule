@@ -1,9 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>org.herbal3d.OSAuth</RootNamespace>
+    <Version>2.1.1</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Copyright>Copyright 2020, Robert Adams</Copyright>
+    <Description>Wrapper class for authorization tokens passed around between Herbal3d libraries</Description>
+    <PackageProjectUrl>https://github.com/Herbal3d/OSAuthModule</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <AssemblyVersion>2.1.1.0</AssemblyVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
