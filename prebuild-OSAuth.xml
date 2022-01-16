@@ -1,4 +1,4 @@
-    <Project frameworkVersion="v4_6" name="Herbal3d.OSAuth" path="addon-modules/OSAuthModule/OSAuth" type="Library">
+    <Project frameworkVersion="v4_8" name="Herbal3d.OSAuth" path="addon-modules/OSAuthModule/OSAuth" type="Library">
       <Configuration name="Debug">
         <Options>
           <OutputPath>../../../bin/</OutputPath>

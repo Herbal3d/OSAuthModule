@@ -130,7 +130,7 @@ namespace org.herbal3d.OSAuth {
                 { "Srv", "" },
                 { "Exp", ExpirationString(DateTime.UtcNow + TimeSpan.FromHours(4.0)) },
                 { "Sid", "" },
-                { "Secret", RandomString(16) },
+                { "Secret", Guid.NewGuid().ToString() }
             };
             _modified = true;
             _randomString = null;
@@ -159,6 +159,7 @@ namespace org.herbal3d.OSAuth {
         }
 
         // From a Base64 encoded string, extract the values for a token
+        //    or, if not a Base64 JSON string, just use the passed string
         public static OSAuthToken FromString(string pTokenString) {
             OSAuthToken token;
             try {
