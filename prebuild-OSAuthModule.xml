@@ -24,7 +24,7 @@
       <Reference name="OpenSim.Region.CoreModules"/>
       <Reference name="OpenSim.Tests.Common"/>
 
-      <Reference name="Herbal3d.CommonEntitiesUtil"/>
+      <Reference name="Herbal3d.CommonUtil"/>
       <Reference name="Herbal3d.OSAuth"/>
 
       <Reference name="Nini"/>
