@@ -17,6 +17,7 @@ using System.Linq;
 using System.Globalization;
 using System.Text;
 
+using Newtonsoft;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -33,6 +34,15 @@ namespace org.herbal3d.OSAuth {
     // During this transition period, there are two forms: 1) a JWT'ish type
     //    which is a Base64 encoded JSON string and 2) a random string. The
     //    latter is formatted when _randomString is not NULL or Empty.
+    //
+    // Note: one problem with this form of token is that rebuilding might
+    //    not create the same token string. That is, taking a token and
+    //    disassembling it and then reassembling it might not code  the
+    //    same token. This is because JSON syntax is flexible and the
+    //    same data can be formatted differently in different JSON renderings.
+    //    (See discussions in JWT on creating canonical JSON strings.)
+    //    This routine "solves" this problem by no rebuilding the
+    //    token string unless the underlying data is changed.
     public class OSAuthToken {
 
         // Service: usually who created this or service it is for
@@ -147,7 +157,7 @@ namespace org.herbal3d.OSAuth {
                             jObj.Add(vals.Key, vals.Value);
                         }
                     }
-                    _tokenJSON = jObj.ToString();
+                    _tokenJSON = jObj.ToString(Formatting.None);
                     _token = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(_tokenJSON));
                 }
                 else {
@@ -164,12 +174,17 @@ namespace org.herbal3d.OSAuth {
             OSAuthToken token;
             try {
                 string jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
-                token = new OSAuthToken();
                 if (jToken.TrimStart().StartsWith("{")) {
+                    // The token seems to be JSON so take it apart
+                    token = new OSAuthToken() {
+                        _token = pTokenString,
+                        _tokenJSON = jToken,
+                    };
                     JObject jObj = JObject.Parse(jToken);
                     foreach (KeyValuePair<string, JToken> val in jObj) {
                         token.AddProperty(val.Key, (string)val.Value);
                     }
+                    token._modified = false;
                 }
                 else {
                     // The token doesn't look like JSON so assume it's a random string
