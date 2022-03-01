@@ -86,8 +86,7 @@
 		<Private>False</Private>
 	  </Reference>
 	</ItemGroup>
-	<ItemGroup>
-	</ItemGroup>
+
 	<ItemGroup>
 	  <Compile Include="OSAuth.cs">
 		<SubType>Code</SubType>
