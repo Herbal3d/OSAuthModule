@@ -163,7 +163,7 @@ namespace org.herbal3d.OSAuth {
                 else {
                     // Token is just a random string.
                     _token = _randomString;
-                    _tokenJSON = _randomString;
+                    _tokenJSON = "{ \"" + _randomString + "\" }";
                 }
             }
         }
@@ -224,6 +224,7 @@ namespace org.herbal3d.OSAuth {
             return new DateTime(2199, 12, 31);
         }
 
+        /*
         // Check that the significant pieces of this token matches the passed token
         public bool Matches(OSAuthToken pOther) {
             return (this.Sid == pOther.Sid) && (this.Secret == pOther.Secret);
@@ -232,16 +233,19 @@ namespace org.herbal3d.OSAuth {
             OSAuthToken otherT = OSAuthToken.FromString(pOther);
             return Matches(otherT);
         }
-
-        // Returns a string of the passed length of a random.
-        // Note that this is not cryptographically random.
-        public static string RandomString(int pLen) {
-            int len = pLen > 128 ? 128 : (pLen < 1 ? 1 : pLen);
-            string digits = "0123456789";
-            var rand = new Random();
-            return String.Join("", Enumerable.Range(0, len).Select( ii => {
-                return digits[rand.Next(0, 10)];
-            }) );
+        */
+        // Test to see if two OSAuthTokens have the same value
+        public override bool Equals(object obj) {
+            bool ret = false;
+            OSAuthToken other = obj as OSAuthToken;
+            if (other != null) {
+                ret = this.Token == other.Token;
+            }
+            return ret;
+        }
+        // For those that need a hash, the hash of the Token is this one
+        public override int GetHashCode() {
+            return this.Token.GetHashCode();
         }
     }
 }
