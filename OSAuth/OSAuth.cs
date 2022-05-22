@@ -146,6 +146,11 @@ namespace org.herbal3d.OSAuth {
             _randomString = null;
         }
 
+        // Build and return a token that is a unique random string
+        public static OSAuthToken SimpleToken() {
+            return OSAuthToken.FromString(Guid.NewGuid().ToString());
+        }
+
         // Build the token based on the current values
         private void BuildToken() {
             lock (_locker) {

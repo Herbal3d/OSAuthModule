@@ -109,12 +109,5 @@ namespace org.herbal3d.OSAuth {
             _log.DebugFormat("{0} Validate just token. Auth={1}", _logHeader, true);
             return true;
         }
-
-        // Create the secret used for JWT tokens.
-        // TODO: Research and make a better secret
-        private string CreateASecret() {
-            return Guid.NewGuid().ToString();
-        }
-
     }
 }
