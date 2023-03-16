@@ -252,6 +252,20 @@ namespace org.herbal3d.OSAuth {
         public override int GetHashCode() {
             return this.Token.GetHashCode();
         }
+
+        public string Dump() {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Token: " + this.Token);
+            sb.AppendLine(", TokenJSON: " + this.TokenJSON);
+            sb.AppendLine(", RandomString: " + this._randomString);
+            sb.AppendLine(", Modified: " + this._modified);
+            sb.AppendLine(", Expiration: " + this.ExpirationString());
+            sb.AppendLine(", Properties:");
+            foreach (KeyValuePair<string, string> pair in _authProperties) {
+                sb.AppendLine("  " + pair.Key + ": " + pair.Value);
+            }
+            return sb.ToString();
+        }
     }
 }
 
