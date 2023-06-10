@@ -18,12 +18,12 @@
     <BaseAddress>285212672</BaseAddress>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
-    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <DocumentationFile></DocumentationFile>
     <DebugSymbols>True</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <Optimize>False</Optimize>
-    <TieredCompilation>false</TieredCompilation>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
     <UseCommonOutputDirectory>True</UseCommonOutputDirectory>
     <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
@@ -46,7 +46,7 @@
     <DebugSymbols>False</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <Optimize>True</Optimize>
-    <TieredCompilation>false</TieredCompilation>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
     <UseCommonOutputDirectory>True</UseCommonOutputDirectory>
     <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
@@ -68,11 +68,6 @@
     <Reference Include="Mono.Addins" >
       <Name>Mono.Addins</Name>
       <HintPath>/home/opensim/opensim-mb/bin/Mono.Addins.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json" >
-      <Name>Newtonsoft.Json</Name>
-      <HintPath>/home/opensim/opensim-mb/bin/Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Nini" >

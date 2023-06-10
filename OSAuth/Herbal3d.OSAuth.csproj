@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <PreserveCompilationContext>false</PreserveCompilationContext>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <RuntimeFrameworkVersion>5.0.0</RuntimeFrameworkVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>Herbal3d.OSAuth</AssemblyName>
     <Deterministic>true</Deterministic>
@@ -18,12 +17,12 @@
     <BaseAddress>285212672</BaseAddress>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
-    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <DocumentationFile></DocumentationFile>
     <DebugSymbols>True</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <Optimize>False</Optimize>
-    <TieredCompilation>false</TieredCompilation>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
     <UseCommonOutputDirectory>True</UseCommonOutputDirectory>
     <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
@@ -46,7 +45,7 @@
     <DebugSymbols>False</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <Optimize>True</Optimize>
-    <TieredCompilation>false</TieredCompilation>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
     <UseCommonOutputDirectory>True</UseCommonOutputDirectory>
     <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
@@ -63,9 +62,5 @@
     <OutDir>../../../bin/</OutDir>
     <RootNamespace>org.herbal3d.OSAuth/</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-  </ItemGroup>
 
 </Project>

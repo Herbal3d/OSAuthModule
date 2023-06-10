@@ -1,4 +1,4 @@
-    <Project forceFrameworkVersion="netstandard2_0"
+    <Project forceFrameworkVersion="net6_0"
                 name="Herbal3d.OSAuth"
                 path="addon-modules/OSAuthModule/OSAuth"
                 type="Library">
@@ -11,8 +11,6 @@
       </Configuration>
 
       <ReferencePath>../../../bin/</ReferencePath>
-
-      <PackageReference name="Newtonsoft.Json" version="13.0.1"/>
 
     </Project>
 

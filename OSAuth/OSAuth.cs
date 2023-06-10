@@ -13,13 +13,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Globalization;
 using System.Text;
-
-using Newtonsoft;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace org.herbal3d.OSAuth {
 
@@ -70,7 +67,7 @@ namespace org.herbal3d.OSAuth {
         }
 
         // THe token is made up of key/value pairs
-        private readonly Dictionary<string, string> _authProperties;
+        private Dictionary<string, string> _authProperties;
 
         public void AddProperty(string key, string val) {
             if (_authProperties.ContainsKey(key)) {
@@ -156,13 +153,11 @@ namespace org.herbal3d.OSAuth {
             lock (_locker) {
                 if (String.IsNullOrEmpty(_randomString)) {
                     // Not a random string. Create token from properties
-                    JObject jObj = new JObject();
-                    foreach (KeyValuePair<string, string> vals in _authProperties) {
-                        if (!String.IsNullOrEmpty(vals.Value)) {
-                            jObj.Add(vals.Key, vals.Value);
-                        }
-                    }
-                    _tokenJSON = jObj.ToString(Formatting.None);
+                    var options = new JsonSerializerOptions {
+                        WriteIndented = false,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.Never
+                    };
+                    _tokenJSON = JsonSerializer.Serialize(_authProperties, options);
                     _token = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(_tokenJSON));
                 }
                 else {
@@ -177,18 +172,21 @@ namespace org.herbal3d.OSAuth {
         //    or, if not a Base64 JSON string, just use the passed string
         public static OSAuthToken FromString(string pTokenString) {
             OSAuthToken token;
+            string jToken = "UNKNOWN";
             try {
-                string jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
+                jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
+                System.Console.WriteLine("[OSAuthToken] FromString: token: {0}", jToken); // DEBUG DEBUG
                 if (jToken.TrimStart().StartsWith("{")) {
                     // The token seems to be JSON so take it apart
                     token = new OSAuthToken() {
                         _token = pTokenString,
                         _tokenJSON = jToken,
                     };
-                    JObject jObj = JObject.Parse(jToken);
-                    foreach (KeyValuePair<string, JToken> val in jObj) {
-                        token.AddProperty(val.Key, (string)val.Value);
-                    }
+                    var props = JsonSerializer.Deserialize<Dictionary<string, string>>(jToken);
+                    foreach (var item in props)
+                    {
+                        token.AddProperty(item.Key, item.Value);
+                    };
                     token._modified = false;
                 }
                 else {
@@ -198,9 +196,10 @@ namespace org.herbal3d.OSAuth {
                     };
                 }
             }
-            catch {
+            catch (Exception e) {
                 // Most likely here because the parsing of the token failed.
                 // This means the string was just a token by itself
+                System.Console.WriteLine("*** Failed to parse token: raw={0}, unpacked={1}, e={2}", pTokenString, jToken, e); // DEBUG DEBUG
                 token = new OSAuthToken {
                     _randomString = pTokenString
                 };

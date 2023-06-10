@@ -33,8 +33,6 @@
       <Reference name="log4net"/>
       <Reference name="nunit.framework"/>
 
-      <Reference name="Newtonsoft.Json"/>
-
       <Files>
         <Match pattern="*.cs" recurse="true">
           <Exclude name="Tests" pattern="Tests"/>
