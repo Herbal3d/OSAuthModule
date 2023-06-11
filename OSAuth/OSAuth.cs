@@ -175,7 +175,6 @@ namespace org.herbal3d.OSAuth {
             string jToken = "UNKNOWN";
             try {
                 jToken =  Encoding.UTF8.GetString(System.Convert.FromBase64String(pTokenString));
-                System.Console.WriteLine("[OSAuthToken] FromString: token: {0}", jToken); // DEBUG DEBUG
                 if (jToken.TrimStart().StartsWith("{")) {
                     // The token seems to be JSON so take it apart
                     token = new OSAuthToken() {
@@ -196,10 +195,9 @@ namespace org.herbal3d.OSAuth {
                     };
                 }
             }
-            catch (Exception e) {
+            catch {
                 // Most likely here because the parsing of the token failed.
                 // This means the string was just a token by itself
-                System.Console.WriteLine("*** Failed to parse token: raw={0}, unpacked={1}, e={2}", pTokenString, jToken, e); // DEBUG DEBUG
                 token = new OSAuthToken {
                     _randomString = pTokenString
                 };
